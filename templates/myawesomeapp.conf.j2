@@ -1,0 +1,23 @@
+{{ ansible_managed }}
+
+server {
+  listen {{ reverse_proxy_port }};
+
+  server_name {{ application_url }};
+
+  client_max_body_size 10m;
+
+  access_log /var/log/nginx/{{ application_name }}.access.log;
+  error_log /var/log/nginx/{{ application_name }}.error.log;
+
+  {{ nginx_sec_headers }}
+
+  location / {
+    proxy_pass http://localhost:{{ application_port }};
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+  }
+}

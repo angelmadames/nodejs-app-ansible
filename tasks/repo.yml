@@ -1,0 +1,55 @@
+---
+- name: Ensure {{ application_root_dir }} has adequate permissions.
+  file:
+    path: "{{ application_root_dir }}"
+    mode: 0755
+    owner: "{{ system_user }}"
+    group: "{{ sustem_group }}"
+  tags:
+    - dir
+    - repo
+
+- name: Verify if there are any {{ application_repo_path }} backups.
+  stat:
+    path: "{{ application_repo_path_backup }}.*"
+  register: repo_dir_backup
+  tags:
+    - repo
+    - backup
+
+- name: Manage {{ application_repo_path }} bakcups before using selected git strategy.
+  block:
+    - name: Delete previous {{ application_repo_path }} backup.
+      command:
+        cmd: "rm -rf {{ application_repo_path }}.*"
+    - name: Backup current {{ application_repo_path }}.
+      command:
+        cmd: "cp -rp {{ application_repo_path }} {{ application_repo_path_backup }}"
+        creates: "{{ application_repo_path_backup }}"
+  when:
+    - repo_dir_backup.backup.stat.isdir is defined
+    - repo_dir_backup.stat.isdir
+  tags:
+    - repo
+    - backup
+
+- name: Clean up current {{ application_repo_path }}.
+  command:
+    cmd: "rm -rf {{ application_repo_path }}"
+    removes: "{{ application_repo_path }}"
+  when: git_strategy == "clone"
+  tags:
+    - repo
+    - deploy
+
+- name: Cloning {{ application_name }} repository.
+  git:
+    repo: "{{ application_repo }}"
+    dest: "{{ application_repo_path }}"
+    force: yes
+    update: yes
+    accept_hostkey: yes
+    version: "{{ version }}"
+  tags:
+    - repo
+    - deploy

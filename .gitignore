@@ -1,0 +1,6 @@
+# gitignore for nodejs app ansible playbook
+
+tmp/**
+*.retry
+*/__pycache__
+*.pyc

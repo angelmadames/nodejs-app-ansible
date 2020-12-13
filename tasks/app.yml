@@ -1,0 +1,50 @@
+---
+- name: Installing {{ application_name }} dependencies on {{ application_repo_path }}.
+  shell: npm install
+  args:
+    chdir: "{{ application_repo_path }}"
+    executable: /bin/bash
+  tags:
+    - deploy
+
+- name: Add environment file on {{ application_repo_path }}.
+  template:
+    src: app.env.j2
+    dest: "{{ application_repo_path }}/{{ environment_file }}"
+    owner: "{{ system_user }}"
+    group: "{{ system_group }}"
+    mode: 0644
+  tags:
+    - deploy
+
+- name: Build {{ application_name }} on {{ application_repo_path }}.
+  shell: "{{ build_command }}"
+  args:
+    chdir: "{{ application_repo_path }}"
+    executable: /bin/bash
+  become_user: "{{ system_user }}"
+  tags:
+    - deploy
+
+- name: Reload if {{ application_name }} is currently running.
+  shell: |
+    pm2 reload \
+    {{ application_name }} \
+    --update-env
+  args:
+    chdir: "{{ application_repo_path }}"
+  become_user: "{{ system_user }}"
+  ignore_errors: yes
+  no_log: yes
+  register: application_state
+  tags:
+    - deploy
+
+- name: Run the application ecosystem using PM2.
+  shell: "pm2 start {{ run_script }}"
+  args:
+    chdir: "{{ application_repo_path }}"
+  become_user: "{{ system_user }}"
+  when: application_state is failed
+  tags:
+    - deploy

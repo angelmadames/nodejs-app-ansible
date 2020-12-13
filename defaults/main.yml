@@ -1,0 +1,47 @@
+---
+# Give the application a name. This will be used to
+# identify the git repo directory, log files, etc.
+application_name: myawesomeapp
+
+application_url: myawesomeapp.io
+
+# Set the repository git URL. HTTPs clone is not supported at the moment.
+application_repo: "git@github.com:soluciones-gbh/demo-api.git"
+
+# The path where the application's repository will live.
+application_root_dir: "/src"
+
+# The path where applciation's code will be cloned.
+application_repo_path: "{{ application_root_dir }}/{{ application_name }}"
+application_repo_path_backup: "{{ application_repo_path }}.{{ ansible_date_time.iso8601_basic_short }}"
+
+# Select the revision of the repository to be used.
+# This could be a branch, a tag/release, or a commit hash.
+version: develop
+
+environment_file: .env
+build_command: build
+run_script: dist/src/index.js
+
+# Specify the git clone strategy to be used. Options are 'clone' and 'checkout'.
+# Clone strategy will rename the current {{ application_repo_path }}
+# thus the repo is cloned from scratch. Checkout simply re-uses the
+# same path and simulates the behavior of 'git checkout {{ version }}'.
+git_strategy: checkout
+
+# Some applications require passing arguments to node
+# at build or run time, so they can avoid memory limitations.
+max_old_space_size: 4096
+
+# Set the application port. This is a local port that is not
+# exposed to the public network.
+application_port: 2002
+
+# Set the reverse_proxy port. This will be exposed to the public
+# network and will act as a reverse proxy for your application.
+reverse_proxy_port: 80
+
+# Add your virtual host nginx configuration file for your application.
+# If you have more than one configuration, add it to the list.
+nginx_conf:
+  - myawesomeapp.conf.j2

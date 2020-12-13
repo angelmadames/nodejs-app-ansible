@@ -1,0 +1,30 @@
+---
+- name: Removing nginx default site configuration.
+  file:
+    path: "/etc/nginx/{{ item }}/default"
+    state: absent
+  loop:
+    - sites-enabled
+    - sites-available
+  tags:
+    - nginx
+
+- name: Adding {{ app_name }} nginx site configuration file.
+  template:
+    src: "{{ item }}"
+    dest: /etc/nginx/sites-available/
+    mode: "0644"
+  loop: "{{ nginx_conf }}"
+  notify:
+    - restart nginx
+  tags:
+    - nginx
+
+- name: Soft linking {{ app_name }} nginx configuration file to sites-enabled.
+  file:
+    src: "/etc/nginx/sites-available/{{ item }}"
+    path: "/etc/nginx/sites-enabled/{{ item }}"
+    state: link
+  loop: "{{ nginx_conf }}"
+  tags:
+    - nginx
